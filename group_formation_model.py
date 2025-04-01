@@ -2,6 +2,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from sklearn.metrics import pairwise_distances
+from tqdm import tqdm
 
 class AlgoritmoGeneticoAVA:
     """
@@ -217,23 +218,28 @@ class AlgoritmoGeneticoAVA:
         # Inicializa a população
         populacao = self.inicializar_populacao()
 
-        # Para cada geração
-        for geracao in range(self.num_geracoes):
-            # Calcula o fitness de cada indivíduo
-            fitness_populacao = np.array([self.calcular_fitness(ind) for ind in populacao])
+        # Para cada geração com barra de progresso
+        with tqdm(total=self.num_geracoes, desc="Executando AG") as pbar:
+            for geracao in range(self.num_geracoes):
+                # Calcula o fitness de cada indivíduo
+                fitness_populacao = np.array([self.calcular_fitness(ind) for ind in populacao])
 
-            # Guarda o melhor fitness da geração
-            melhor_fitness = np.max(fitness_populacao)
-            self.historico_fitness.append(melhor_fitness)
+                # Guarda o melhor fitness da geração
+                melhor_fitness = np.max(fitness_populacao)
+                self.historico_fitness.append(melhor_fitness)
 
-            # Seleciona indivíduos para reprodução
-            indices_selecionados = self.selecao_roleta(fitness_populacao)
+                # Seleciona indivíduos para reprodução
+                indices_selecionados = self.selecao_roleta(fitness_populacao)
 
-            # Aplica cruzamento
-            populacao = self.cruzamento_uniforme(populacao, indices_selecionados)
+                # Aplica cruzamento
+                populacao = self.cruzamento_uniforme(populacao, indices_selecionados)
 
-            # Aplica mutação
-            populacao = self.mutacao_gene(populacao)
+                # Aplica mutação
+                populacao = self.mutacao_gene(populacao)
+
+                # Atualiza a barra de progresso
+                pbar.update(1)
+                pbar.set_postfix({"Melhor Fitness": f"{melhor_fitness:.4f}"})
 
         # Calcula o fitness da população final
         fitness_final = np.array([self.calcular_fitness(ind) for ind in populacao])
@@ -336,29 +342,38 @@ def comparar_metodos(dados_alunos, num_grupos, num_instancias=30):
     resultados_ag = []
     resultados_aleatorio = []
 
-    for _ in range(num_instancias):
-        # Executa o método proposto (AG)
-        ag = AlgoritmoGeneticoAVA(
-            dados_normalizados,
-            num_grupos,
-            tam_populacao=100,
-            pc=0.1,
-            pm=0.03,
-            num_geracoes=100
-        )
-        _, fitness_ag = ag.executar()
+    # Adicionando barra de progresso para a comparação
+    with tqdm(total=num_instancias, desc="Comparando métodos") as pbar:
+        for i in range(num_instancias):
+            # Executa o método proposto (AG)
+            ag = AlgoritmoGeneticoAVA(
+                dados_normalizados,
+                num_grupos,
+                tam_populacao=100,
+                pc=0.1,
+                pm=0.03,
+                num_geracoes=100
+            )
+            _, fitness_ag = ag.executar()
 
-        # Converter fitness para soma de distâncias
-        soma_distancias_ag = 100/fitness_ag - 1
-        resultados_ag.append(soma_distancias_ag)
+            # Converter fitness para soma de distâncias
+            soma_distancias_ag = 100/fitness_ag - 1
+            resultados_ag.append(soma_distancias_ag)
 
-        # Executa o método aleatório
-        _, soma_distancias_aleatorio = formacao_grupos_aleatoria(
-            num_alunos,
-            num_grupos,
-            dados_normalizados
-        )
-        resultados_aleatorio.append(soma_distancias_aleatorio)
+            # Executa o método aleatório
+            _, soma_distancias_aleatorio = formacao_grupos_aleatoria(
+                num_alunos,
+                num_grupos,
+                dados_normalizados
+            )
+            resultados_aleatorio.append(soma_distancias_aleatorio)
+
+            # Atualiza a barra de progresso
+            pbar.update(1)
+            pbar.set_postfix({
+                "AG": f"{soma_distancias_ag:.4f}",
+                "Aleatório": f"{soma_distancias_aleatorio:.4f}"
+            })
 
     # Calcula média e desvio padrão
     media_ag = np.mean(resultados_ag)
@@ -394,6 +409,8 @@ if __name__ == "__main__":
     # Normaliza os dados
     dados_normalizados = normalizar_dados(dados_alunos)
 
+    print("Iniciando algoritmo genético para formação de grupos...")
+
     # Cria e executa o AG
     ag = AlgoritmoGeneticoAVA(
         dados_normalizados,
@@ -409,6 +426,8 @@ if __name__ == "__main__":
     print(f"Melhor solução encontrada: {melhor_solucao}")
     print(f"Fitness da melhor solução: {melhor_fitness}")
     print(f"Soma das distâncias: {100/melhor_fitness - 1}")
+
+    print("\nIniciando comparação com método aleatório...")
 
     # Compara com método aleatório
     media_ag, media_aleatorio = comparar_metodos(dados_alunos, num_grupos)
