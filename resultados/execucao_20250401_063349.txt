@@ -1,0 +1,85 @@
+### Experimento de Formação de Grupos ###
+Data e hora: 2025-04-01 06:33:49
+
+Parâmetros do Cenário:
+Número de alunos: 100
+Número de grupos: 5
+
+Iniciando algoritmo genético para formação de grupos...
+### Execução do Algoritmo Genético ###
+Número de alunos: 100
+Número de grupos: 5
+Tamanho da população: 100
+Probabilidade de cruzamento: 0.1
+Probabilidade de mutação: 0.03
+Número de gerações: 100
+
+Progresso por geração:
+Geração 1: Melhor fitness = 1.648291
+Geração 11: Melhor fitness = 1.678335
+Geração 21: Melhor fitness = 1.708355
+Geração 31: Melhor fitness = 1.717313
+Geração 41: Melhor fitness = 1.726924
+Geração 51: Melhor fitness = 1.724602
+Geração 61: Melhor fitness = 1.722850
+Geração 71: Melhor fitness = 1.724666
+Geração 81: Melhor fitness = 1.683546
+Geração 91: Melhor fitness = 1.682695
+Geração 100: Melhor fitness = 1.685406
+
+Resultados do Algoritmo Genético:
+Fitness da melhor solução: 1.684595055939559
+Soma das distâncias: 58.36144692305678
+
+Distribuição de alunos por grupo:
+Grupo 1: 21 alunos
+Grupo 2: 22 alunos
+Grupo 3: 25 alunos
+Grupo 4: 14 alunos
+Grupo 5: 18 alunos
+
+Iniciando comparação com método aleatório...
+
+### Comparação de Métodos ###
+Número de instâncias: 30
+
+Resultados por instância:
+Instância | Distância AG | Distância Aleatório
+--------------------------------------------------
+        1 |      59.4299 |             60.5364
+        2 |      57.9447 |             60.9781
+        3 |      58.2253 |             61.6304
+        4 |      58.6123 |             60.9146
+        5 |      58.6567 |             60.1551
+        6 |      58.3212 |             60.8156
+        7 |      59.6107 |             60.0759
+        8 |      57.3048 |             61.0700
+        9 |      58.0259 |             61.0740
+       10 |      58.5272 |             61.2725
+       11 |      58.7614 |             61.0186
+       12 |      57.3740 |             60.7554
+       13 |      58.3404 |             61.2700
+       14 |      58.7267 |             61.3346
+       15 |      59.1089 |             60.9744
+       16 |      59.2816 |             60.9097
+       17 |      60.2109 |             60.4644
+       18 |      59.0268 |             61.0679
+       19 |      58.5835 |             60.7477
+       20 |      58.2697 |             61.4231
+       21 |      58.0011 |             60.6222
+       22 |      59.2403 |             60.6543
+       23 |      56.6304 |             60.8092
+       24 |      58.8443 |             61.7082
+       25 |      57.2559 |             61.2525
+       26 |      58.6863 |             60.7208
+       27 |      58.7830 |             61.5909
+       28 |      58.6160 |             60.2462
+       29 |      59.1054 |             60.8947
+       30 |      57.5435 |             61.5447
+
+Resultados Finais:
+Média das distâncias (AG): 58.5016 ± 0.7579
+Média das distâncias (Aleatório): 60.9511 ± 0.4159
+Melhoria: 4.02%
+
+Gráfico de evolução salvo em: figuras/evolucao_fitness_20250401_063541.png

@@ -3,6 +3,8 @@ import random
 import matplotlib.pyplot as plt
 from sklearn.metrics import pairwise_distances
 from tqdm import tqdm
+import os
+import datetime
 
 class AlgoritmoGeneticoAVA:
     """
@@ -208,15 +210,28 @@ class AlgoritmoGeneticoAVA:
 
         return nova_populacao
 
-    def executar(self):
+    def executar(self, arquivo_saida=None):
         """
         Executa o algoritmo genético
+
+        Parâmetros:
+        arquivo_saida (file): Arquivo para salvar o progresso (opcional)
 
         Retorna:
         tuple: Melhor solução encontrada e seu fitness
         """
         # Inicializa a população
         populacao = self.inicializar_populacao()
+
+        if arquivo_saida:
+            arquivo_saida.write("### Execução do Algoritmo Genético ###\n")
+            arquivo_saida.write(f"Número de alunos: {self.num_alunos}\n")
+            arquivo_saida.write(f"Número de grupos: {self.num_grupos}\n")
+            arquivo_saida.write(f"Tamanho da população: {self.tam_populacao}\n")
+            arquivo_saida.write(f"Probabilidade de cruzamento: {self.pc}\n")
+            arquivo_saida.write(f"Probabilidade de mutação: {self.pm}\n")
+            arquivo_saida.write(f"Número de gerações: {self.num_geracoes}\n\n")
+            arquivo_saida.write("Progresso por geração:\n")
 
         # Para cada geração com barra de progresso
         with tqdm(total=self.num_geracoes, desc="Executando AG") as pbar:
@@ -237,6 +252,10 @@ class AlgoritmoGeneticoAVA:
                 # Aplica mutação
                 populacao = self.mutacao_gene(populacao)
 
+                # Escreve progresso no arquivo se fornecido
+                if arquivo_saida and (geracao % 10 == 0 or geracao == self.num_geracoes - 1):
+                    arquivo_saida.write(f"Geração {geracao + 1}: Melhor fitness = {melhor_fitness:.6f}\n")
+
                 # Atualiza a barra de progresso
                 pbar.update(1)
                 pbar.set_postfix({"Melhor Fitness": f"{melhor_fitness:.4f}"})
@@ -248,9 +267,13 @@ class AlgoritmoGeneticoAVA:
         melhor_indice = np.argmax(fitness_final)
         return populacao[melhor_indice], fitness_final[melhor_indice]
 
-    def plotar_evolucao(self):
+    def plotar_evolucao(self, arquivo_saida=None, salvar_figura=True):
         """
         Plota a evolução do fitness ao longo das gerações
+
+        Parâmetros:
+        arquivo_saida (file): Arquivo para salvar o caminho da figura (opcional)
+        salvar_figura (bool): Se True, salva a figura em um arquivo
         """
         plt.figure(figsize=(10, 6))
         plt.plot(range(len(self.historico_fitness)), self.historico_fitness)
@@ -258,7 +281,21 @@ class AlgoritmoGeneticoAVA:
         plt.xlabel('Geração')
         plt.ylabel('Melhor Fitness')
         plt.grid(True)
-        plt.show()
+
+        if salvar_figura:
+            # Cria diretório para figuras se não existir
+            if not os.path.exists('figuras'):
+                os.makedirs('figuras')
+
+            # Gera nome de arquivo com timestamp
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            caminho_figura = f"figuras/evolucao_fitness_{timestamp}.png"
+            plt.savefig(caminho_figura)
+
+            if arquivo_saida:
+                arquivo_saida.write(f"\nGráfico de evolução salvo em: {caminho_figura}\n")
+
+        # plt.show()
 
 
 def normalizar_dados(dados):
@@ -322,7 +359,7 @@ def formacao_grupos_aleatoria(num_alunos, num_grupos, dados_alunos):
 
 
 # Função para comparar os métodos
-def comparar_metodos(dados_alunos, num_grupos, num_instancias=30):
+def comparar_metodos(dados_alunos, num_grupos, num_instancias=30, arquivo_saida=None):
     """
     Compara o método proposto com o método aleatório
 
@@ -330,6 +367,7 @@ def comparar_metodos(dados_alunos, num_grupos, num_instancias=30):
     dados_alunos (numpy.ndarray): Dados dos alunos
     num_grupos (int): Número de grupos a formar
     num_instancias (int): Número de instâncias de simulação
+    arquivo_saida (file): Arquivo para salvar os resultados (opcional)
 
     Retorna:
     tuple: Média e intervalo de confiança para cada método
@@ -341,6 +379,13 @@ def comparar_metodos(dados_alunos, num_grupos, num_instancias=30):
 
     resultados_ag = []
     resultados_aleatorio = []
+
+    if arquivo_saida:
+        arquivo_saida.write("\n### Comparação de Métodos ###\n")
+        arquivo_saida.write(f"Número de instâncias: {num_instancias}\n\n")
+        arquivo_saida.write("Resultados por instância:\n")
+        arquivo_saida.write("Instância | Distância AG | Distância Aleatório\n")
+        arquivo_saida.write("-" * 50 + "\n")
 
     # Adicionando barra de progresso para a comparação
     with tqdm(total=num_instancias, desc="Comparando métodos") as pbar:
@@ -368,6 +413,10 @@ def comparar_metodos(dados_alunos, num_grupos, num_instancias=30):
             )
             resultados_aleatorio.append(soma_distancias_aleatorio)
 
+            # Salva resultados da instância atual no arquivo
+            if arquivo_saida:
+                arquivo_saida.write(f"{i+1:9d} | {soma_distancias_ag:12.4f} | {soma_distancias_aleatorio:19.4f}\n")
+
             # Atualiza a barra de progresso
             pbar.update(1)
             pbar.set_postfix({
@@ -378,63 +427,104 @@ def comparar_metodos(dados_alunos, num_grupos, num_instancias=30):
     # Calcula média e desvio padrão
     media_ag = np.mean(resultados_ag)
     media_aleatorio = np.mean(resultados_aleatorio)
+    std_ag = np.std(resultados_ag)
+    std_aleatorio = np.std(resultados_aleatorio)
 
-    # Calcula intervalos de confiança (usando bootstrap)
-    # Na prática, precisaríamos implementar o método Bootstrap aqui
+    # Calcula melhoria percentual
+    melhoria_percentual = ((media_aleatorio - media_ag) / media_aleatorio) * 100
+
+    if arquivo_saida:
+        arquivo_saida.write("\nResultados Finais:\n")
+        arquivo_saida.write(f"Média das distâncias (AG): {media_ag:.4f} ± {std_ag:.4f}\n")
+        arquivo_saida.write(f"Média das distâncias (Aleatório): {media_aleatorio:.4f} ± {std_aleatorio:.4f}\n")
+        arquivo_saida.write(f"Melhoria: {melhoria_percentual:.2f}%\n")
 
     return media_ag, media_aleatorio
 
 
 # Exemplo de uso
 if __name__ == "__main__":
-    # Parâmetros do cenário
-    num_alunos = 100
-    num_grupos = 5
+    # Cria diretório para resultados se não existir
+    if not os.path.exists('resultados'):
+        os.makedirs('resultados')
 
-    # Gera dados sintéticos semelhantes aos do artigo
-    # Idade (anos) - uniforme [10, 60]
-    # Hora de acesso - uniforme [0, 23]
-    # Tempo de acesso (min) - uniforme [1, 90]
-    # Disciplina - uniforme [1, 4]
-    np.random.seed(42)  # Para reprodutibilidade
+    # Gera nome de arquivo com timestamp
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    arquivo_resultados = f"resultados/execucao_{timestamp}.txt"
 
-    idade = np.random.uniform(10, 60, num_alunos).reshape(-1, 1)
-    hora_acesso = np.random.uniform(0, 23, num_alunos).reshape(-1, 1)
-    tempo_acesso = np.random.uniform(1, 90, num_alunos).reshape(-1, 1)
-    disciplina = np.random.randint(1, 5, num_alunos).reshape(-1, 1)
+    # Abre arquivo para escrita
+    with open(arquivo_resultados, 'w') as arquivo_saida:
+        arquivo_saida.write(f"### Experimento de Formação de Grupos ###\n")
+        arquivo_saida.write(f"Data e hora: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
-    # Combina todas as características
-    dados_alunos = np.hstack((idade, hora_acesso, tempo_acesso, disciplina))
+        # Parâmetros do cenário
+        num_alunos = 100
+        num_grupos = 5
 
-    # Normaliza os dados
-    dados_normalizados = normalizar_dados(dados_alunos)
+        arquivo_saida.write(f"Parâmetros do Cenário:\n")
+        arquivo_saida.write(f"Número de alunos: {num_alunos}\n")
+        arquivo_saida.write(f"Número de grupos: {num_grupos}\n\n")
 
-    print("Iniciando algoritmo genético para formação de grupos...")
+        # Gera dados sintéticos semelhantes aos do artigo
+        # Idade (anos) - uniforme [10, 60]
+        # Hora de acesso - uniforme [0, 23]
+        # Tempo de acesso (min) - uniforme [1, 90]
+        # Disciplina - uniforme [1, 4]
+        np.random.seed(42)  # Para reprodutibilidade
 
-    # Cria e executa o AG
-    ag = AlgoritmoGeneticoAVA(
-        dados_normalizados,
-        num_grupos,
-        tam_populacao=100,
-        pc=0.1,
-        pm=0.03,
-        num_geracoes=100
-    )
+        idade = np.random.uniform(10, 60, num_alunos).reshape(-1, 1)
+        hora_acesso = np.random.uniform(0, 23, num_alunos).reshape(-1, 1)
+        tempo_acesso = np.random.uniform(1, 90, num_alunos).reshape(-1, 1)
+        disciplina = np.random.randint(1, 5, num_alunos).reshape(-1, 1)
 
-    melhor_solucao, melhor_fitness = ag.executar()
+        # Combina todas as características
+        dados_alunos = np.hstack((idade, hora_acesso, tempo_acesso, disciplina))
 
-    print(f"Melhor solução encontrada: {melhor_solucao}")
-    print(f"Fitness da melhor solução: {melhor_fitness}")
-    print(f"Soma das distâncias: {100/melhor_fitness - 1}")
+        # Normaliza os dados
+        dados_normalizados = normalizar_dados(dados_alunos)
 
-    print("\nIniciando comparação com método aleatório...")
+        print("Iniciando algoritmo genético para formação de grupos...")
+        arquivo_saida.write("Iniciando algoritmo genético para formação de grupos...\n")
 
-    # Compara com método aleatório
-    media_ag, media_aleatorio = comparar_metodos(dados_alunos, num_grupos)
+        # Cria e executa o AG
+        ag = AlgoritmoGeneticoAVA(
+            dados_normalizados,
+            num_grupos,
+            tam_populacao=100,
+            pc=0.1,
+            pm=0.03,
+            num_geracoes=100
+        )
 
-    print(f"\nMédia das distâncias (AG): {media_ag:.4f}")
-    print(f"Média das distâncias (Aleatório): {media_aleatorio:.4f}")
-    print(f"Melhoria: {((media_aleatorio - media_ag) / media_aleatorio) * 100:.2f}%")
+        melhor_solucao, melhor_fitness = ag.executar(arquivo_saida)
+        soma_distancias = 100/melhor_fitness - 1
 
-    # Plota a evolução do fitness
-    ag.plotar_evolucao()
+        print(f"Melhor solução encontrada: {melhor_solucao}")
+        print(f"Fitness da melhor solução: {melhor_fitness}")
+        print(f"Soma das distâncias: {soma_distancias}")
+
+        arquivo_saida.write("\nResultados do Algoritmo Genético:\n")
+        arquivo_saida.write(f"Fitness da melhor solução: {melhor_fitness}\n")
+        arquivo_saida.write(f"Soma das distâncias: {soma_distancias}\n\n")
+
+        # Salva a distribuição de alunos por grupo
+        arquivo_saida.write("Distribuição de alunos por grupo:\n")
+        for g in range(1, num_grupos + 1):
+            num_alunos_grupo = np.sum(melhor_solucao == g)
+            arquivo_saida.write(f"Grupo {g}: {num_alunos_grupo} alunos\n")
+
+        print("\nIniciando comparação com método aleatório...")
+        arquivo_saida.write("\nIniciando comparação com método aleatório...\n")
+
+        # Compara com método aleatório
+        media_ag, media_aleatorio = comparar_metodos(dados_alunos, num_grupos, arquivo_saida=arquivo_saida)
+
+        print(f"\nMédia das distâncias (AG): {media_ag:.4f}")
+        print(f"Média das distâncias (Aleatório): {media_aleatorio:.4f}")
+        print(f"Melhoria: {((media_aleatorio - media_ag) / media_aleatorio) * 100:.2f}%")
+
+        print(f"\nResultados salvos em: {arquivo_resultados}")
+
+        # Plota a evolução do fitness
+        ag.plotar_evolucao(arquivo_saida)
+
