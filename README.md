@@ -1,3 +1,6 @@
+# Github
+[https://github.com/PitzTech/ai_analise_grupo](https://github.com/PitzTech/ai_analise_grupo)
+
 # Group Formation in Virtual Learning Environments using Genetic Algorithms
 
 This project implements a Genetic Algorithm (GA) for optimizing the formation of student groups in Virtual Learning Environments (VLE). The implementation is based on the approach described in the paper "Uma Abordagem Baseada em Algoritmo Genético para Formação de Grupos de Estudos em Ambientes Virtuais de Aprendizagem" (A Genetic Algorithm-Based Approach for Study Group Formation in Virtual Learning Environments).
@@ -74,4 +77,4 @@ You can customize various parameters of the genetic algorithm:
 - Number of groups to form
 
 You can also modify the student characteristics or add new ones according to your specific VLE requirements.
-"# ai_analise_grupo" 
+"# ai_analise_grupo"
